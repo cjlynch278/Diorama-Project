@@ -1,59 +1,112 @@
+
+<!--  Authors: Chris Lynch, Sean Jeffers, and Herman Haile -->
 <!--  Squares.html -->
-<!-- Last Revision -->
-<!-- Authors: Sean Jeffers, Chris Lynch, Herman Haile -->
-<!--  html file for dioramaProject -->
-<html><head><script id="vertex-shader" type="x-shader/x-vertex">
-
-attribute  vec4 vPosition;
-attribute  vec4 vColor;
-varying vec4 fColor;
-
-uniform vec3 theta;
-
-void main() 
-{
-    // These variables compute the sin and cosines for each vector,
-	// so that we may spin the object
-    vec3 angles = radians( theta );
-    vec3 c = cos( angles );
-    vec3 s = sin( angles );
-
-   	//Matrix computing
-     mat4 ry = mat4( c.y, 0.0, -s.y, 0.0,
-		    0.0, 1.0,  0.0, 0.0,
-		    s.y, 0.0,  c.y, 0.0,
-		    0.0, 0.0,  0.0, 1.0 );
+<!-- 4/29/2016 -->
+<!--  HTML file for dioramaProject.js -->
+<html>
+<head>
+</head>
+<body>
 	
 
-	fColor = vColor;
-    gl_Position =ry * vPosition;
-} 
-</script>
+    <script id="vertex-shader" type="x-shader/x-vertex">
+		//Our vertex shader
 
-<script id="fragment-shader" type="x-shader/x-fragment">
+        attribute  vec4 vPosition;
+        attribute  vec4 vColor;
+        attribute  vec2 vTexCoord;
+        uniform mat4 modelViewMatrix;
+        uniform mat4 projectionMatrix;
+        varying vec4 fColor;
+        varying vec2 fTexCoord;
+        varying vec3 R;
+        varying vec3 vNormals;
 
-precision mediump float;
-   
-varying vec4 fColor;
+		varying vec3 viewCoords;        
 
-void
-main()
-{
-    gl_FragColor = fColor;
-}
-</script>
+        attribute vec4 vNormal;
+        uniform mat3 normalMatrix;
 
-<script type="text/javascript" src="webgl-utils.js"></script>
-<script type="text/javascript" src="initShaders.js"></script>
-<script type="text/javascript" src="MV.js"></script>
-<script type="text/javascript" src="dioramaProject.js"></script>
 
-</head><body>
-<canvas id="gl-canvas" width="512" "="" height="512">
-Oops ... your browser doesn't support the HTML5 canvas element
-</canvas>
-   
-<br>
-<!--Add the button to the web page  -->
-<button id="Button">Toggle Rotate</button>
-</body></html>
+        uniform vec3 theta;
+
+        void main()
+        {
+
+           
+            gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+            fTexCoord = vTexCoord;
+            fColor = vColor;
+
+            vec3 eyePos  = (modelViewMatrix*vPosition).xyz;
+            vec3 N = normalize(normalMatrix*vNormal.xyz);
+            R = reflect(eyePos, N);
+
+
+        }
+    </script>
+    <script id="texture" type="x-shader/x-fragment">
+		// Our fragment shader that handles textures
+
+        precision mediump float;
+		
+		
+        varying vec4 fColor;
+        varying vec2 fTexCoord;
+        varying vec3 R;
+
+        uniform sampler2D texture;
+
+        uniform samplerCube texMap;
+
+        void main()
+        {
+       
+        //This gives the objects textures but no reflections
+        vec4 texImg = texture2D( texture, fTexCoord );
+        gl_FragColor = fColor*texImg;
+
+        }
+    </script>
+    <script id="reflection" type="x-shader/x-fragment">
+		//Our fragment shader that handles reflections
+		
+        precision mediump float;
+        uniform samplerCube envSampler;
+        varying vec4 fColor;
+        varying vec2 fTexCoord;
+        varying vec3 R;
+		
+		varying vec3 vCoords;
+		varying vec3 vNormals;
+		varying vec3 viewCoords;
+		uniform mat3 normalsMatrix;	
+		
+        uniform sampler2D texture;
+        
+        uniform samplerCube texMap;
+
+        void main()
+        {
+        	vec3 Ns = normalsMatrix * vNormals;
+        	vec3 Vs = -viewCoords;  
+			vec3 Rs = -reflect(Vs, Ns); 
+			gl_FragColor = textureCube(envSampler, R); 
+	
+        }
+    </script>
+
+    <script type="text/javascript" src="webgl-utils.js"></script>
+    <script type="text/javascript" src="initShaders.js"></script>
+    <script type="text/javascript" src="MV.js"></script>
+    <script type="text/javascript" src="dioramaProject.js"></script>
+
+
+
+    <canvas id="gl-canvas" width="512" height="512">
+        Oops ... your browser doesn't support the HTML5 canvas element
+    </canvas>
+<img id="texImage" src="SA2011_black.gif" hidden="">
+
+</body>
+</html>

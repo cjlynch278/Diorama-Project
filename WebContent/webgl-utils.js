@@ -60,7 +60,7 @@
 WebGLUtils = function() {
 
 /**
- * Creates the HTML for a failure message
+ * Creates the HTLM for a failure message
  * @param {string} canvasContainerId id of container of th
  *        canvas.
  * @return {string} The html.
